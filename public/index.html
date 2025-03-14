@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connect Four with Aaron</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1, h2 { text-align: center; }
+    
+    /* Login styles */
+    .login-container {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 30px;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      /* font-weight: bold; */
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #4a5568;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s;
+    }
+    
+    button:hover {
+      background-color: #2d3748;
+    }
+    
+    /* Game styles */
+    .game-container {
+      display: none;
+      text-align: center;
+    }
+    .board {
+      background-color: #0074D9;
+      padding: 10px;
+      border-radius: 10px;
+      display: inline-block;
+      margin: 0 auto;
+    }
+    .column {
+      display: inline-block;
+      vertical-align: top;
+      cursor: pointer;
+    }
+    .cell {
+      width: 40px;
+      height: 40px;
+      background-color: white;
+      border-radius: 50%;
+      margin: 3px;
+    }
+    .cell.user { background-color: #FF4136; }
+    .cell.aaron { background-color: #FFDC00; }
+    .status {
+      margin: 20px 0;
+      padding: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+    
+    /* Admin styles */
+    .admin-container {
+      display: none;
+    }
+    .games-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+    .game-card {
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 15px;
+      width: 350px;
+      margin-bottom: 20px;
+    }
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .game-header h3 { margin: 0; }
+    
+    /* Phone number styles */
+    .phone-container {
+      max-width: 400px;
+      margin: 20px auto;
+    }
+    
+    /* Warning styles */
+    .warning {
+      color: #6c757d;
+      padding: 10px;
+      margin-bottom: 15px;
+      font-style: italic;
+      text-align: center;
+    }
+    
+    /* Game controls */
+    .game-controls {
+      margin: 20px 0;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+    .resign-btn, .restart-btn {
+      width: auto;
+    }
+    .logout {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      text-decoration: none;
+      color: #6c757d;
+      cursor: pointer;
+    }
+    .logout:hover {
+      color: #343a40;
+    }
+    
+    /* Only make login button full width */
+    #loginBtn {
+      width: 100%;
+      margin-top: 15px;
+      font-size: 16px;
+    }
+    #savePhoneBtn {
+      width: auto;
+    }
+    
+    /* Specific button styles */
+    .resign-btn {
+      background-color: #64748b;  /* Slightly lighter slate */
+    }
+    
+    .resign-btn:hover {
+      background-color: #475569;  /* Darker on hover */
+    }
+  </style>
+</head>
+<body>
+  <a id="logoutLink" href="/logout" class="logout" style="display: none;">Logout</a>
+  <h1>Connect Four with Aaron</h1>
+  
+  <div id="loginForm" class="login-container">
+    <form id="loginFormElement">
+      <div class="form-group">
+        <label for="username">Name:</label>
+        <input type="text" id="username" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" required>
+      </div>
+      <div class="warning">
+        Passwords are NOT encrypted and i WILL read them!!
+      </div>
+      
+      <button type="submit" id="loginBtn">Login / Register</button>
+    </form>
+  </div>
+
+  <div id="gameContainer" class="game-container">
+    <div id="status" class="status">Loading game...</div>
+    
+    <div id="board" class="board"></div>
+    
+    <div class="game-controls">
+      <button id="restartBtn" class="restart-btn" style="display: none;">Start New Game</button>
+      <button id="resignBtn" class="resign-btn">Resign Game</button>
+    </div>
+    
+    <div class="phone-container">
+      <div class="form-group">
+        <label for="phoneNumber">Enter your phone number and I'll text you when it's your turn:</label>
+        <input type="tel" id="phoneNumber">
+        <div id="phoneStatus" style="color: #4CAF50; margin-top: 5px; font-size: 0.9em;"></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Admin Container -->
+  <div id="adminContainer" class="admin-container">
+    <div id="gamesContainer" class="games-container"></div>
+  </div>
+  
+  <script>
+    // DOM Elements
+    const loginForm = document.getElementById('loginForm');
+    const gameContainer = document.getElementById('gameContainer');
+    const adminContainer = document.getElementById('adminContainer');
+    const boardEl = document.getElementById('board');
+    const statusEl = document.getElementById('status');
+    const phoneNumberInput = document.getElementById('phoneNumber');
+    const savePhoneBtn = document.getElementById('savePhoneBtn');
+    const resignBtn = document.getElementById('resignBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const gamesContainer = document.getElementById('gamesContainer');
+    
+    // State
+    let gameState = null;
+    let isAdmin = false;
+    
+    // Show login form
+    function showLoginForm() {
+      loginForm.style.display = 'block';
+      gameContainer.style.display = 'none';
+      adminContainer.style.display = 'none';
+      const logoutLink = document.getElementById('logoutLink');
+      if (logoutLink) {
+        logoutLink.style.display = 'none';
+      }
+    }
+    
+    // Show game board
+    function showGameBoard() {
+      loginForm.style.display = 'none';
+      gameContainer.style.display = 'block';
+      adminContainer.style.display = 'none';
+      renderGame();
+      setupGameUpdates();
+      const logoutLink = document.getElementById('logoutLink');
+      if (logoutLink) {
+        logoutLink.style.display = 'block';
+      }
+    }
+    
+    // Show admin dashboard
+    function showAdminDashboard() {
+      loginForm.style.display = 'none';
+      gameContainer.style.display = 'none';
+      adminContainer.style.display = 'block';
+      loadGames();
+      setupAdminUpdates();
+      const logoutLink = document.getElementById('logoutLink');
+      if (logoutLink) {
+        logoutLink.style.display = 'block';
+      }
+    }
+    
+    // Replace login button click handler with form submit handler
+    document.getElementById('loginFormElement').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      
+      if (!username || !password) {
+        alert('Username and password are required');
+        return;
+      }
+      
+      try {
+        const response = await fetch('/connect/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username, password }),
+          credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          if (username === 'aaron') {
+            isAdmin = true;
+            showAdminDashboard();
+          } else {
+            // Only fetch game state for non-admin users
+            const gameResponse = await fetch('/connect/game/state', {
+              credentials: 'include'
+            });
+            gameState = await gameResponse.json();
+            showGameBoard();
+          }
+        } else {
+          alert(data.error || 'Login failed');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        alert('An error occurred during login');
+      }
+    });
+    
+    // Render game board
+    function renderGame() {
+      if (!gameState) return;
+      
+      // Render the board
+      boardEl.innerHTML = '';
+      
+      for (let col = 0; col < 7; col++) {
+        const columnEl = document.createElement('div');
+        columnEl.className = 'column';
+        columnEl.dataset.column = col;
+        
+        for (let row = 0; row < 6; row++) {
+          const cellEl = document.createElement('div');
+          cellEl.className = 'cell';
+          
+          const cellValue = gameState.board[row][col];
+          if (cellValue) {
+            cellEl.classList.add(cellValue);
+          }
+          
+          columnEl.appendChild(cellEl);
+        }
+        
+        // Only allow moves if it's user's turn and game is active
+        if (gameState.current_turn === 'user' && gameState.status === 'active') {
+          columnEl.addEventListener('click', () => makeMove(col));
+        }
+        
+        boardEl.appendChild(columnEl);
+      }
+      
+      // Update status message and buttons
+      statusEl.className = 'status';
+      
+      if (gameState.status === 'active') {
+        // Active game state
+        resignBtn.style.display = 'block';
+        restartBtn.style.display = 'none';
+        
+        if (gameState.current_turn === 'user') {
+          statusEl.textContent = 'Your turn!';
+          statusEl.style.color = '#2ECC40';  // Green
+        } else {
+          statusEl.textContent = "Aaron's turn. Please wait...";
+          statusEl.style.color = '#FF851B';  // Orange
+        }
+      } else {
+        // Game over states
+        resignBtn.style.display = 'none';
+        restartBtn.style.display = 'block';
+        statusEl.style.color = '#FF851B';  // Orange
+        
+        if (gameState.status === 'user_won') {
+          statusEl.textContent = 'You won! Congratulations!';
+        } else if (gameState.status === 'aaron_won') {
+          if (gameState.current_turn === 'aaron') {
+            statusEl.textContent = 'You resigned.';
+          } else {
+            statusEl.textContent = 'Aaron won. Better luck next time!';
+          }
+        } else if (gameState.status === 'draw') {
+          statusEl.textContent = "It's a draw!";
+        }
+      }
+    }
+    
+    // Make a move
+    async function makeMove(column) {
+      try {
+        const response = await fetch('/connect/game/move', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ column }),
+          credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          gameState = data.game;
+          renderGame();
+        } else {
+          alert(data.error || 'Failed to make move');
+        }
+      } catch (error) {
+        console.error('Move error:', error);
+      }
+    }
+    
+    // Auto-save phone number when it changes
+    phoneNumberInput.addEventListener('change', async () => {
+      const phoneNumber = phoneNumberInput.value.trim();
+      const statusEl = document.getElementById('phoneStatus');
+      
+      try {
+        const response = await fetch('/connect/user/phone', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ phoneNumber }),
+          credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          statusEl.textContent = 'Saved!';
+          setTimeout(() => {
+            statusEl.textContent = '';
+          }, 2000);
+        } else {
+          statusEl.textContent = data.error || 'Failed to save';
+          statusEl.style.color = '#dc3545';
+        }
+      } catch (error) {
+        console.error('Save phone error:', error);
+        statusEl.textContent = 'Failed to save';
+        statusEl.style.color = '#dc3545';
+      }
+    });
+    
+    // Resign game
+    resignBtn.addEventListener('click', async () => {
+      if (!confirm('You sure?')) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('/connect/game/resign', {
+          method: 'POST',
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          const data = await response.json();
+          alert(data.error || 'Failed to resign game');
+        }
+      } catch (error) {
+        console.error('Error resigning game:', error);
+      }
+    });
+    
+    // Restart game
+    restartBtn.addEventListener('click', async () => {
+      try {
+        const response = await fetch('/connect/game/new', {
+          method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          gameState = data.game;
+          renderGame();
+        } else {
+          alert(data.error || 'Failed to start new game');
+        }
+      } catch (error) {
+        console.error('Error starting new game:', error);
+      }
+    });
+    
+    // Setup game updates via SSE
+    function setupGameUpdates() {
+      const eventSource = new EventSource('/connect/game/updates', {
+        withCredentials: true
+      });
+      
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        gameState = data;
+        renderGame();
+      };
+      
+      eventSource.onerror = () => {
+        eventSource.close();
+        setTimeout(setupGameUpdates, 5000);
+      };
+    }
+    
+    // Admin: Load all games
+    async function loadGames() {
+      try {
+        const response = await fetch('/connect/admin/games', {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const games = await response.json();
+        
+        gamesContainer.innerHTML = '';
+        
+        if (games.length === 0) {
+          gamesContainer.innerHTML = '<p style="text-align: center; width: 100%;">No games</p>';
+          return;
+        }
+        
+        // Add section headers
+        let activeHeader = document.createElement('h2');
+        activeHeader.textContent = 'Active Games';
+        activeHeader.style.width = '100%';
+        activeHeader.style.textAlign = 'center';
+        gamesContainer.appendChild(activeHeader);
+        
+        let hasActiveGames = false;
+        let hasFinishedGames = false;
+        
+        games.forEach(game => {
+          if (game.status === 'active' && !hasActiveGames) {
+            hasActiveGames = true;
+          } else if (game.status !== 'active' && !hasFinishedGames) {
+            hasFinishedGames = true;
+            let finishedHeader = document.createElement('h2');
+            finishedHeader.textContent = 'Finished Games';
+            finishedHeader.style.width = '100%';
+            finishedHeader.style.textAlign = 'center';
+            finishedHeader.style.marginTop = '40px';
+            gamesContainer.appendChild(finishedHeader);
+          }
+          
+          const gameCard = document.createElement('div');
+          gameCard.className = 'game-card';
+          gameCard.dataset.gameId = game.id;
+          
+          const gameHeader = document.createElement('div');
+          gameHeader.className = 'game-header';
+          gameHeader.innerHTML = `
+            <h3>${game.username}</h3>
+            <span>Last move: ${new Date(game.updated_at).toLocaleString()}</span>
+          `;
+          
+          const board = document.createElement('div');
+          board.className = 'board';
+          
+          // Parse board state
+          const boardState = JSON.parse(game.board_state);
+          
+          // Render board
+          for (let col = 0; col < 7; col++) {
+            const columnEl = document.createElement('div');
+            columnEl.className = 'column';
+            columnEl.dataset.column = col;
+            
+            // Add click event for making moves if it's Aaron's turn and game is active
+            if (game.current_turn === 'aaron' && game.status === 'active') {
+              columnEl.style.cursor = 'pointer';
+              columnEl.addEventListener('click', () => makeAdminMove(game.id, col));
+            }
+            
+            for (let row = 0; row < 6; row++) {
+              const cellEl = document.createElement('div');
+              cellEl.className = 'cell';
+              
+              const cellValue = boardState[row][col];
+              if (cellValue) {
+                cellEl.classList.add(cellValue);
+              }
+              
+              columnEl.appendChild(cellEl);
+            }
+            
+            board.appendChild(columnEl);
+          }
+          
+          const status = document.createElement('div');
+          status.className = 'status';
+          
+          if (game.status === 'active') {
+            status.textContent = game.current_turn === 'aaron' ? 'Your turn!' : 'Waiting for user...';
+            status.style.color = game.current_turn === 'aaron' ? '#2ECC40' : '#FF851B';  // Green for Aaron's turn, orange for waiting
+          } else if (game.status === 'user_won') {
+            status.textContent = `${game.username} won`;
+            status.style.color = '#FF851B';
+          } else if (game.status === 'aaron_won') {
+            status.textContent = game.current_turn === 'aaron' ? `${game.username} resigned` : 'You won';
+            status.style.color = '#FF851B';
+          } else if (game.status === 'draw') {
+            status.textContent = "Draw";
+            status.style.color = '#FF851B';
+          }
+          
+          gameCard.appendChild(gameHeader);
+          gameCard.appendChild(board);
+          gameCard.appendChild(status);
+          
+          // Add phone number if available
+          if (game.phone_number) {
+            const phoneEl = document.createElement('div');
+            phoneEl.className = 'phone';
+            phoneEl.textContent = `Phone: ${game.phone_number}`;
+            gameCard.appendChild(phoneEl);
+          }
+          
+          gamesContainer.appendChild(gameCard);
+        });
+        
+        if (!hasActiveGames) {
+          let noActiveGames = document.createElement('p');
+          noActiveGames.textContent = 'No active games';
+          noActiveGames.style.textAlign = 'center';
+          noActiveGames.style.width = '100%';
+          activeHeader.insertAdjacentElement('afterend', noActiveGames);
+        }
+        
+      } catch (error) {
+        console.error('Error loading games:', error);
+        gamesContainer.innerHTML = '<p style="text-align: center; width: 100%;">Error loading games: ' + error.message + '</p>';
+      }
+    }
+    
+    // Admin: Make a move
+    async function makeAdminMove(gameId, column) {
+      try {
+        const response = await fetch('/connect/admin/move', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ gameId, column }),
+          credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Reload games to show updated state
+          loadGames();
+        } else {
+          alert(data.error || 'Failed to make move');
+        }
+      } catch (error) {
+        console.error('Error making move:', error);
+        alert('An error occurred. Please try again.');
+      }
+    }
+    
+    // Add setupAdminUpdates function
+    function setupAdminUpdates() {
+      const eventSource = new EventSource('/connect/game/updates', {
+        withCredentials: true
+      });
+      
+      eventSource.onmessage = (event) => {
+        loadGames(); // Reload all games when any game updates
+      };
+      
+      eventSource.onerror = () => {
+        eventSource.close();
+        setTimeout(setupAdminUpdates, 5000);
+      };
+    }
+    
+    // Initialize the app
+    window.addEventListener('load', async () => {
+      try {
+        // Try to get user data
+        const userResponse = await fetch('/connect/auth/user', {
+          credentials: 'include'
+        });
+        
+        if (userResponse.status === 401) {
+          // Not logged in
+          showLoginForm();
+          return;
+        }
+        
+        const userData = await userResponse.json();
+        
+        // Set phone number if available
+        if (!isAdmin) {
+          phoneNumberInput.value = userData.phone_number || '';
+        }
+        
+        // Check if user is Aaron (admin)
+        if (userData.username === 'aaron') {
+          isAdmin = true;
+          showAdminDashboard();
+        } else {
+          // Only fetch game state for regular users
+          const gameResponse = await fetch('/connect/game/state', {
+            credentials: 'include'
+          });
+          gameState = await gameResponse.json();
+          showGameBoard();
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        showLoginForm();
+      }
+    });
+  </script>
+</body>
+</html> 

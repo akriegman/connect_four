@@ -1,0 +1,19 @@
+{
+  "name": "connect-four-aaron",
+  "version": "1.0.0",
+  "description": "Connect Four game where everyone plays against Aaron",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^8.0.1",
+    "body-parser": "^1.20.1",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  }
+}
