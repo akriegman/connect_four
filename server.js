@@ -32,7 +32,7 @@ db.exec(`
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use('/connect', express.static('public'));
+app.use(express.static('public'));
 app.use(session({
   secret: 'connect-four-aaron-secret',
   resave: false,
@@ -222,7 +222,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.post('/connect/auth/login', (req, res) => {
+app.post('/auth/login', (req, res) => {
   const { username, password } = req.body;
   
   if (!username || !password) {
@@ -260,7 +260,7 @@ app.get('/logout', (req, res) => {
   res.redirect('/');
 });
 
-app.get('/connect/game/state', (req, res) => {
+app.get('/game/state', (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
@@ -275,7 +275,7 @@ app.get('/connect/game/state', (req, res) => {
   res.json(game);
 });
 
-app.post('/connect/game/move', (req, res) => {
+app.post('/game/move', (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
@@ -300,7 +300,7 @@ app.post('/connect/game/move', (req, res) => {
   });
 });
 
-app.get('/connect/game/updates', (req, res) => {
+app.get('/game/updates', (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
@@ -317,7 +317,7 @@ app.get('/connect/game/updates', (req, res) => {
   }
 });
 
-app.post('/connect/user/phone', (req, res) => {
+app.post('/user/phone', (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
@@ -398,7 +398,7 @@ app.post('/admin/move', (req, res) => {
   });
 });
 
-app.post('/connect/game/new', (req, res) => {
+app.post('/game/new', (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
@@ -410,7 +410,7 @@ app.post('/connect/game/new', (req, res) => {
 });
 
 // Update resign endpoint to set proper state
-app.post('/connect/game/resign', (req, res) => {
+app.post('/game/resign', (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
@@ -441,7 +441,7 @@ app.post('/connect/game/resign', (req, res) => {
 });
 
 // Add this endpoint to get current user info
-app.get('/connect/auth/user', (req, res) => {
+app.get('/auth/user', (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
