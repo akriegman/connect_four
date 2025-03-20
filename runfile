@@ -1,0 +1,14 @@
+#!/bin/bash
+
+function run {
+	npm start
+}
+
+function dev {
+	npm run dev
+}
+
+function deploy {
+    rsync -av --files-from=<(git ls-files) ./ ak2313@shell.srcf.net:~/src/connect_four
+	ssh ak2313@webserver.srcf.net "systemctl --user restart connect_four"
+}

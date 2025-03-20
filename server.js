@@ -32,7 +32,7 @@ db.exec(`
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static('public'));
+app.use('/connect', express.static('public'));
 app.use(session({
   secret: 'connect-four-aaron-secret',
   resave: false,
@@ -217,12 +217,7 @@ function checkWin(board, row, col, player) {
   return false;
 }
 
-// Routes
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.post('/auth/login', (req, res) => {
+app.post('/connect/auth/login', (req, res) => {
   const { username, password } = req.body;
   
   if (!username || !password) {
@@ -255,12 +250,12 @@ app.post('/auth/login', (req, res) => {
   }
 });
 
-app.get('/logout', (req, res) => {
+app.get('/connect/logout', (req, res) => {
   req.session.destroy();
-  res.redirect('/');
+  res.redirect('/connect');
 });
 
-app.get('/game/state', (req, res) => {
+app.get('/connect/game/state', (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
@@ -275,7 +270,7 @@ app.get('/game/state', (req, res) => {
   res.json(game);
 });
 
-app.post('/game/move', (req, res) => {
+app.post('/connect/game/move', (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
@@ -300,7 +295,7 @@ app.post('/game/move', (req, res) => {
   });
 });
 
-app.get('/game/updates', (req, res) => {
+app.get('/connect/game/updates', (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
@@ -317,7 +312,7 @@ app.get('/game/updates', (req, res) => {
   }
 });
 
-app.post('/user/phone', (req, res) => {
+app.post('/connect/user/phone', (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
@@ -337,7 +332,7 @@ app.post('/user/phone', (req, res) => {
   res.json({ success: true });
 });
 
-app.get('/admin/games', (req, res) => {
+app.get('/connect/admin/games', (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
@@ -363,7 +358,7 @@ app.get('/admin/games', (req, res) => {
   res.json(games);
 });
 
-app.post('/admin/move', (req, res) => {
+app.post('/connect/admin/move', (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
@@ -398,7 +393,7 @@ app.post('/admin/move', (req, res) => {
   });
 });
 
-app.post('/game/new', (req, res) => {
+app.post('/connect/game/new', (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
@@ -410,7 +405,7 @@ app.post('/game/new', (req, res) => {
 });
 
 // Update resign endpoint to set proper state
-app.post('/game/resign', (req, res) => {
+app.post('/connect/game/resign', (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
@@ -421,7 +416,7 @@ app.post('/game/resign', (req, res) => {
     return res.status(400).json({ error: 'Game is already finished' });
   }
   
-  // Update game status - on resign, it's Aaron's win and Aaron's turn
+  // Set status to aaron_won instead of resigned
   db.prepare('UPDATE games SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
     .run('aaron_won', game.id);
   
@@ -441,7 +436,7 @@ app.post('/game/resign', (req, res) => {
 });
 
 // Add this endpoint to get current user info
-app.get('/auth/user', (req, res) => {
+app.get('/connect/auth/user', (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }

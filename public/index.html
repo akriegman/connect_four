@@ -183,7 +183,7 @@
 </head>
 <body>
   <a href="/" class="home-link">More from Aaron</a>
-  <a id="logoutLink" href="/logout" class="logout" style="display: none;">Logout</a>
+  <a id="logoutLink" href="/connect/logout" class="logout" style="display: none;">Logout</a>
   <h1>Connect Four with Aaron</h1>
   
   <div id="loginForm" class="login-container">
@@ -198,7 +198,7 @@
         <input type="password" id="password" required>
       </div>
       <div class="warning">
-        Passwords are NOT encrypted and i WILL read them!!
+        Passwords are NOT encrypted and I WILL read them!!
       </div>
       
       <button type="submit" id="loginBtn">Login / Register</button>
@@ -211,14 +211,14 @@
     <div id="board" class="board"></div>
     
     <div class="game-controls">
-      <button id="restartBtn" class="restart-btn" style="display: none;">Start New Game</button>
-      <button id="resignBtn" class="resign-btn">Resign Game</button>
+      <button id="restartBtn" class="restart-btn" style="display: none;">New Game</button>
+      <button id="resignBtn" class="resign-btn">Resign</button>
     </div>
     
     <div class="phone-container">
       <div class="form-group">
         <label for="phoneNumber">Enter your phone number and I'll text you when it's your turn:</label>
-        <input type="tel" id="phoneNumber">
+        <input type="tel" id="phoneNumber" placeholder="Or other socials">
         <div id="phoneStatus" style="color: #4CAF50; margin-top: 5px; font-size: 0.9em;"></div>
       </div>
     </div>
@@ -289,13 +289,13 @@
       const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
       
-      if (!username || !password) {
-        alert('Username and password are required');
+      if (!username) {
+        alert('What\'s your name?');
         return;
       }
       
       try {
-        const response = await fetch('/auth/login', {
+        const response = await fetch('/connect/auth/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -312,7 +312,7 @@
             showAdminDashboard();
           } else {
             // Only fetch game state for non-admin users
-            const gameResponse = await fetch('/game/state', {
+            const gameResponse = await fetch('/connect/game/state', {
               credentials: 'include'
             });
             gameState = await gameResponse.json();
@@ -368,10 +368,10 @@
         restartBtn.style.display = 'none';
         
         if (gameState.current_turn === 'user') {
-          statusEl.textContent = 'Your turn!';
+          statusEl.textContent = 'Your turn';
           statusEl.style.color = '#2ECC40';  // Green
         } else {
-          statusEl.textContent = "Aaron's turn. Please wait...";
+          statusEl.textContent = "My turn. Give me a minute...";
           statusEl.style.color = '#FF851B';  // Orange
         }
       } else {
@@ -381,15 +381,11 @@
         statusEl.style.color = '#FF851B';  // Orange
         
         if (gameState.status === 'user_won') {
-          statusEl.textContent = 'You won! Congratulations!';
+          statusEl.textContent = 'You win, nice';
         } else if (gameState.status === 'aaron_won') {
-          if (gameState.current_turn === 'aaron') {
-            statusEl.textContent = 'You resigned.';
-          } else {
-            statusEl.textContent = 'Aaron won. Better luck next time!';
-          }
+          statusEl.textContent = 'I win, gg';
         } else if (gameState.status === 'draw') {
-          statusEl.textContent = "It's a draw!";
+          statusEl.textContent = "It's a draw";
         }
       }
     }
@@ -397,7 +393,7 @@
     // Make a move
     async function makeMove(column) {
       try {
-        const response = await fetch('/game/move', {
+        const response = await fetch('/connect/game/move', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -425,7 +421,7 @@
       const statusEl = document.getElementById('phoneStatus');
       
       try {
-        const response = await fetch('/user/phone', {
+        const response = await fetch('/connect/user/phone', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -437,7 +433,7 @@
         const data = await response.json();
         
         if (data.success) {
-          statusEl.textContent = 'Saved!';
+          statusEl.textContent = 'Saved';
           setTimeout(() => {
             statusEl.textContent = '';
           }, 2000);
@@ -459,7 +455,7 @@
       }
       
       try {
-        const response = await fetch('/game/resign', {
+        const response = await fetch('/connect/game/resign', {
           method: 'POST',
           credentials: 'include'
         });
@@ -476,7 +472,7 @@
     // Restart game
     restartBtn.addEventListener('click', async () => {
       try {
-        const response = await fetch('/game/new', {
+        const response = await fetch('/connect/game/new', {
           method: 'POST'
         });
         
@@ -495,7 +491,7 @@
     
     // Setup game updates via SSE
     function setupGameUpdates() {
-      const eventSource = new EventSource('/game/updates', {
+      const eventSource = new EventSource('/connect/game/updates', {
         withCredentials: true
       });
       
@@ -514,7 +510,7 @@
     // Admin: Load all games
     async function loadGames() {
       try {
-        const response = await fetch('/admin/games', {
+        const response = await fetch('/connect/admin/games', {
           credentials: 'include'
         });
         
@@ -562,7 +558,13 @@
           gameHeader.className = 'game-header';
           gameHeader.innerHTML = `
             <h3>${game.username}</h3>
-            <span>Last move: ${new Date(game.updated_at).toLocaleString()}</span>
+            <span>Last move: ${new Date(game.updated_at).toLocaleString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true
+            })}</span>
           `;
           
           const board = document.createElement('div');
@@ -602,13 +604,13 @@
           status.className = 'status';
           
           if (game.status === 'active') {
-            status.textContent = game.current_turn === 'aaron' ? 'Your turn!' : 'Waiting for user...';
+            status.textContent = game.current_turn === 'aaron' ? 'Your turn' : 'Waiting for user...';
             status.style.color = game.current_turn === 'aaron' ? '#2ECC40' : '#FF851B';  // Green for Aaron's turn, orange for waiting
           } else if (game.status === 'user_won') {
             status.textContent = `${game.username} won`;
             status.style.color = '#FF851B';
           } else if (game.status === 'aaron_won') {
-            status.textContent = game.current_turn === 'aaron' ? `${game.username} resigned` : 'You won';
+            status.textContent = 'You won';
             status.style.color = '#FF851B';
           } else if (game.status === 'draw') {
             status.textContent = "Draw";
@@ -647,7 +649,7 @@
     // Admin: Make a move
     async function makeAdminMove(gameId, column) {
       try {
-        const response = await fetch('/admin/move', {
+        const response = await fetch('/connect/admin/move', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ gameId, column }),
@@ -670,7 +672,7 @@
     
     // Add setupAdminUpdates function
     function setupAdminUpdates() {
-      const eventSource = new EventSource('/game/updates', {
+      const eventSource = new EventSource('/connect/game/updates', {
         withCredentials: true
       });
       
@@ -688,7 +690,7 @@
     window.addEventListener('load', async () => {
       try {
         // Try to get user data
-        const userResponse = await fetch('/auth/user', {
+        const userResponse = await fetch('/connect/auth/user', {
           credentials: 'include'
         });
         
@@ -711,7 +713,7 @@
           showAdminDashboard();
         } else {
           // Only fetch game state for regular users
-          const gameResponse = await fetch('/game/state', {
+          const gameResponse = await fetch('/connect/game/state', {
             credentials: 'include'
           });
           gameState = await gameResponse.json();
