@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Connect Four with Aaron</title>
+  <title>Connect 4 with Aaron</title>
   <style>
     body {
       font-family: sans-serif;
@@ -184,7 +184,11 @@
 <body>
   <a href="/" class="home-link">More from Aaron</a>
   <a id="logoutLink" href="/connect/logout" class="logout" style="display: none;">Logout</a>
-  <h1>Connect Four with Aaron</h1>
+  <h1>Connect 4 with Aaron</h1>
+  
+  <!-- Audio elements for turn notifications -->
+  <audio id="yourTurnSound" src="/connect/notification-pluck-off-269290.mp3" preload="auto"></audio>
+  <audio id="opponentTurnSound" src="/connect/ficha-de-ajedrez-34722.mp3" preload="auto"></audio>
   
   <div id="loginForm" class="login-container">
     <form id="loginFormElement">
@@ -198,7 +202,7 @@
         <input type="password" id="password" required>
       </div>
       <div class="warning">
-        Passwords are NOT encrypted and I WILL read them!!
+        Passwords are NOT encrypted and I WILL read them!
       </div>
       
       <button type="submit" id="loginBtn">Login / Register</button>
@@ -406,6 +410,7 @@
         
         if (data.success) {
           gameState = data.game;
+          document.getElementById('opponentTurnSound').play()
           renderGame();
         } else {
           alert(data.error || 'Failed to make move');
@@ -496,6 +501,7 @@
       });
       
       eventSource.onmessage = (event) => {
+        document.getElementById('yourTurnSound').play().catch(e => console.log('Sound play error:', e));
         const data = JSON.parse(event.data);
         gameState = data;
         renderGame();
@@ -660,6 +666,7 @@
         
         if (data.success) {
           // Reload games to show updated state
+          document.getElementById('opponentTurnSound').play()
           loadGames();
         } else {
           alert(data.error || 'Failed to make move');
@@ -677,6 +684,7 @@
       });
       
       eventSource.onmessage = (event) => {
+        document.getElementById('yourTurnSound').play().catch(e => console.log('Sound play error:', e));
         loadGames(); // Reload all games when any game updates
       };
       
