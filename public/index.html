@@ -188,7 +188,7 @@
   
   <!-- Audio elements for turn notifications -->
   <audio id="yourTurnSound" src="/connect/notification-pluck-off-269290.mp3" preload="auto"></audio>
-  <audio id="opponentTurnSound" src="/connect/ficha-de-ajedrez-34722.mp3" preload="auto"></audio>
+  <audio id="opponentTurnSound" src="/connect/ficha-trimmed.mp3" preload="auto"></audio>
   
   <div id="loginForm" class="login-container">
     <form id="loginFormElement">
@@ -501,9 +501,14 @@
       });
       
       eventSource.onmessage = (event) => {
-        document.getElementById('yourTurnSound').play().catch(e => console.log('Sound play error:', e));
         const data = JSON.parse(event.data);
         gameState = data;
+        
+        // Play sound notification if it's the user's turn
+        if (gameState.status === 'active' && gameState.current_turn === 'user') {
+          document.getElementById('yourTurnSound').play().catch(e => console.log('Sound play error:', e));
+        }
+        
         renderGame();
       };
       
@@ -684,7 +689,13 @@
       });
       
       eventSource.onmessage = (event) => {
-        document.getElementById('yourTurnSound').play().catch(e => console.log('Sound play error:', e));
+        const data = JSON.parse(event.data);
+        
+        // Play sound notification if it's Aaron's turn in any game
+        if (data.status === 'active' && data.current_turn === 'aaron') {
+          document.getElementById('yourTurnSound').play().catch(e => console.log('Sound play error:', e));
+        }
+        
         loadGames(); // Reload all games when any game updates
       };
       
